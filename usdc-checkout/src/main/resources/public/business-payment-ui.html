@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Simulate QR Payment</title>
+</head>
+<body>
+  <h2>Simulate USDC Payment</h2>
+  <form id="paymentForm">
+    <label>Invoice ID:</label>
+    <input type="text" id="invoiceId" required><br><br>
+    <label>Amount (USDC):</label>
+    <input type="text" id="amount" required><br><br>
+    <label>Sender Private Key:</label>
+    <input type="password" id="fromWallet" required><br><br>
+    <button type="submit">Simulate & Transfer</button>
+  </form>
+
+  <div id="responseArea"></div>
+
+  <script>
+    document.getElementById('paymentForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const invoiceId = document.getElementById("invoiceId").value;
+      const amount = document.getElementById("amount").value;
+      const fromWallet = document.getElementById("fromWallet").value;
+
+      const response = await fetch("/simulate-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ invoiceId, amount, fromWallet })
+      });
+
+      const result = await response.json();
+      document.getElementById("responseArea").innerText =
+        `Status: ${result.status} for Invoice: ${result.invoiceId}`;
+    };
+  </script>
+</body>
+</html>

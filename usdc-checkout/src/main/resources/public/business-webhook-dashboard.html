@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Webhook Dashboard</title>
+    <script>
+        async function fetchStatus() {
+            const res = await fetch("/webhook-status");
+            const events = await res.json();
+            const table = document.getElementById("statusTable");
+            table.innerHTML = "<tr><th>Type</th><th>From</th><th>To</th><th>Value</th><th>TxID</th><th>Status</th><th>Timestamp</th></tr>";
+            events.forEach(e => {
+                const row = table.insertRow();
+                row.innerHTML = `<td>${e.type}</td><td>${e.from}</td><td>${e.to}</td><td>${e.value}</td><td>${e.txId}</td><td>${e.status}</td><td>${new Date(e.timestamp).toLocaleString()}</td>`;
+            });
+        }
+
+        setInterval(fetchStatus, 5000);
+        window.onload = fetchStatus;
+    </script>
+</head>
+<body>
+    <h1>Webhook Event Status Dashboard</h1>
+    <table id="statusTable" border="1"></table>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Live Wallet Monitor</title>
+</head>
+<body>
+    <h2>🔍 Live Wallet Transfers</h2>
+    <table border="1">
+        <thead>
+            <tr><th>From</th><th>To</th><th>Tx Hash</th></tr>
+        </thead>
+        <tbody id="feedTable">
+        </tbody>
+    </table>
+
+    <script>
+        async function loadFeed() {
+            const res = await fetch("/api/live-feed");
+            const data = await res.json();
+            const tbody = document.getElementById("feedTable");
+            tbody.innerHTML = "";
+            data.forEach(item => {
+                const row = `<tr><td>${item.from}</td><td>${item.to}</td><td>${item.txHash}</td></tr>`;
+                tbody.innerHTML += row;
+            });
+        }
+        setInterval(loadFeed, 3000); // refresh every 3 seconds
+        loadFeed();
+    </script>
+</body>
+</html>

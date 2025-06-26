@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Expanded Risk Analyzer</title>
+</head>
+<body>
+  <h2>Bank Persona: Expanded Wallet Risk Analyzer</h2>
+  <button onclick="analyze()">Analyze Risk</button>
+  <pre id="result"></pre>
+
+  <script>
+    async function analyze() {
+      const response = await fetch('/risk/expanded', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          wallet: "0x1234567890abcdef",
+          ageDays: 10,
+          txCount: 3,
+          tokenTypes: 25,
+          isFlagged: false,
+          oddHourTransfer: true,
+          interactedWithDeFi: true
+        })
+      });
+      const data = await response.json();
+      document.getElementById('result').innerText = JSON.stringify(data, null, 2);
+    }
+  </script>
+</body>
+</html>

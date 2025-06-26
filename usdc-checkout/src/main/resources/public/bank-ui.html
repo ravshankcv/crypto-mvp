@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<head><title>Bank Dashboard</title></head>
+<body>
+  <h2>Register Wallet</h2>
+  <input id="walletId" placeholder="Wallet ID"/>
+  <button onclick="register()">Register</button>
+
+  <h2>Verify Access</h2>
+  <input id="part1" placeholder="Part 1"/>
+  <input id="part2" placeholder="Part 2"/>
+  <button onclick="verify()">Verify</button>
+
+  <h2>Risk Score</h2>
+  <input id="wallet" placeholder="Wallet Address"/>
+  <input id="count" placeholder="Tx Count"/>
+  <input id="amount" placeholder="Avg Tx Amount"/>
+  <button onclick="risk()">Score</button>
+  <p id="result"></p>
+
+  <h2>Live Wallet Risk Scoring</h1>
+  <table id="riskTable">
+      <thead>
+          <tr><th>Wallet</th><th>Risk Score</th></tr>
+      </thead>
+      <tbody></tbody>
+  </table>
+
+  <h2>Custody Wallet Risk Overview</h2>
+  <button onclick="loadWalletRisks()">Refresh</button>
+  <table id="walletTable">
+    <thead>
+      <tr>      
+        <th>Wallet Address</th>
+        <th>Risk Score</th>
+        <th>Status</th>
+        <th>Reasons</th>
+        <th>History</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <section>
+    <h2>🔍 Live Wallet Transfers</h2>
+    <table border="1">
+        <thead>
+            <tr><th>From</th><th>To</th><th>Tx Hash</th></tr>
+        </thead>
+        <tbody id="feedTable">
+        </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h3>📝 Wallet Annotation</h3>
+    <form id="tagForm">
+      <input type="text" id="walletInput" placeholder="Wallet address" required />
+      <input type="text" id="tagInput" placeholder="Reason or Tag" required />
+      <button type="submit">Tag Wallet</button>
+    </form>
+
+    <p id="tagResult"></p>
+
+    <h3>🔍 Wallet Annotations</h3>
+    <table id="annotationsTable">
+      <thead>
+        <tr><th>Wallet</th><th>Tags</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <section>
+    <h3>🔐 Wallet Audit Access (Third-Party)</h3>
+    <input type="text" id="tokenInput" placeholder="Enter Audit Token" />
+    <button onclick="fetchAudit()">Fetch Wallet Data</button>
+
+    <table id="auditTable">
+      <thead>
+        <tr><th>Wallet</th><th>Score</th><th>Status</th><th>Annotations</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <section>
+    <h3>Download Wallet Audit CSV</h3>
+    <button onclick="downloadCSV()">Download Audit Report (CSV)</button>
+  </section>
+
+  <script>
+    function register() {
+      fetch("/register/" + walletId.value).then(res => res.text()).then(t => result.innerText = t);
+    }
+    function verify() {
+      fetch(`/verify/${walletId.value}/${part1.value}/${part2.value}`).then(res => res.text()).then(t => result.innerText = t);
+    }
+    function risk() {
+      fetch(`/risk/${wallet.value}/${count.value}/${amount.value}`).then(res => res.text()).then(t => result.innerText = t);
+    }
+
+    async function loadRisks() {
+        const res = await fetch('/api/wallet-risks');
+        const data = await res.json();
+        const tbody = document.querySelector("#riskTable tbody");
+        tbody.innerHTML = "";
+        data.forEach(risk => {
+            const row = `<tr><td>${risk.wallet}</td><td>${risk.score}</td></tr>`;
+            tbody.innerHTML += row;
+        });
+    }
+
+    loadRisks();
+    setInterval(loadRisks, 10000); // Auto-refresh every 10 seconds
+
+    async function loadWalletRisks() {
+        const res = await fetch('/api/wallet-check');
+        const data = await res.json();
+        const tbody = document.querySelector("#walletTable tbody");
+        tbody.innerHTML = "";
+
+        data.forEach(row => {
+          const tr = document.createElement("tr");
+          const status = row.active ? "Recently Active" : "Idle";
+          const reasons = (row.reasons || []).join(", ");
+          const history = (row.history || []).join("<br>");
+          tr.innerHTML = `<td>${row.wallet}</td><td>${row.score}</td><td>${status}</td><td>${reasons}</td><td>${history}</td>`;
+          tbody.appendChild(tr);
+        });
+    }
+
+    // Load on page load
+    loadWalletRisks();
+
+    
+    async function loadFeed() {
+        const res = await fetch('/api/live-feed');
+        const data = await res.json();
+        const tbody = document.getElementById("feedTable");
+        tbody.innerHTML = "";
+        data.forEach(item => {
+            const row = `<tr><td>${item.from}</td><td>${item.to}</td><td>${item.txHash}</td></tr>`;
+            tbody.innerHTML += row;
+        });
+    }
+    setInterval(loadFeed, 3000); // refresh every 3 seconds
+    loadFeed();
+
+    document.getElementById("tagForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const wallet = document.getElementById("walletInput").value;
+      const tag = document.getElementById("tagInput").value;
+
+      const res = await fetch(`/api/tag-wallet?wallet=${wallet}&tag=${tag}`, { method: "POST" });
+      const result = await res.text();
+      document.getElementById("tagResult").textContent = result;
+      loadAnnotations();
+    });
+
+    async function loadAnnotations() {
+      const res = await fetch('/api/wallet-annotations');
+      const data = await res.json();
+      const tbody = document.querySelector("#annotationsTable tbody");
+      tbody.innerHTML = "";
+
+      Object.entries(data).forEach(([wallet, tags]) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${wallet}</td><td>${tags.join(", ")}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    loadAnnotations();
+
+    async function fetchAudit() {
+      const token = document.getElementById("tokenInput").value;
+      const res = await fetch('/api/audit/wallets', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+
+      if (!res.ok) {
+        alert(await res.text());
+        return;
+      }
+
+      const data = await res.json();
+      const tbody = document.querySelector("#auditTable tbody");
+      tbody.innerHTML = "";
+
+      data.forEach(row => {
+        const status = row.active ? "Active" : "Idle";
+        const annotations = (row.annotations || []).join(", ");
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${row.wallet}</td><td>${row.score}</td><td>${status}</td><td>${annotations}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function downloadCSV() {
+      const token = document.getElementById("tokenInput").value;
+      const res = await fetch('/api/audit/wallets/csv', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+
+      if (!res.ok) {
+        alert(await res.text());
+        return;
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = "audit-report.csv";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+    
+  </script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Invoice Matching</title>
+</head>
+<body>
+  <h2>Simulated Invoice Matching Dashboard</h2>
+  <p>Monitoring live USDC transfers and matching them with pending invoices...</p>
+  <div id="output"></div>
+
+  <script>
+    setInterval(() => {
+      fetch("/matched-invoices")
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById("output").innerHTML = "<pre>" + JSON.stringify(data, null, 2) + "</pre>";
+        });
+    }, 5000);
+  </script>
+</body>
+</html>
+<!-- This HTML file simulates a dashboard for matching invoices with USDC transfers. -->
+<!-- It fetches matched invoices every 5 seconds and displays them in a formatted JSON view. -->
+<!-- The server-side endpoint `/matched-invoices` should return a JSON array of matched invoices. -->

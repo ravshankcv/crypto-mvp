@@ -1,0 +1,20 @@
+# General
+node_modules/
+.env
+__pycache__/
+*.log
+
+# Python
+.venv/
+
+# Java
+target/
+*.class
+
+# VSCode
+.vscode/
+
+# Hardhat
+cache/
+artifacts/
+

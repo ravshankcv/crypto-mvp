@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Wallet Dashboard</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        input, button { margin: 5px; }
+        section { margin-bottom: 30px; }
+        h2 { border-bottom: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <h1>User Wallet Dashboard</h1>
+
+    <!-- Security Alerts -->
+    <section>
+        <h2>🔐 Security Alerts</h2>
+        <input type="text" id="walletId" placeholder="Enter Wallet ID" />
+        <button onclick="getAlerts()">Check Alerts</button>
+        <ul id="alerts"></ul>
+    </section>
+
+    <!-- Transaction Explanation -->
+    <section>
+        <h2>🧠 Explain Transaction</h2>
+        <input type="text" id="txHash" placeholder="Enter Transaction Hash" />
+        <button onclick="explainTx()">Explain</button>
+        <p id="explanation"></p>
+    </section>
+
+    <!-- Wallet Summary -->
+    <section>
+        <h2>📊 Wallet Summary</h2>
+        <input type="text" id="summaryWalletId" placeholder="Enter Wallet ID" />
+        <button onclick="getSummary()">Get Summary</button>
+        <pre id="summaryOutput"></pre>
+    </section>
+
+    <section>
+        <h2>Transaction History with Explainability</h2>
+        <table id="txTable" border="1">
+            <thead>
+            <tr><th>Date</th><th>Merchant</th><th>Amount</th><th>Category</th><th>Explanation</th></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </section>
+
+    <section id="explanationBox" style="margin-top: 20px; display: none;">
+        <h3>Transaction Explanation</h3>
+        <p id="explanationText"></p>
+    </section>
+
+    <section>
+        <h3 style="text-align:center;">Behavioral Alerts</h3>
+        <div id="alerts" style="width: 80%; margin: 0 auto; border: 1px solid #ccc; padding: 15px;"></div>
+    </section>
+
+    <section>
+        <h3 style="text-align:center;">🧠 Behavior Alert Log</h3>
+        <table id="alertLogTable" style="margin:auto; border-collapse:collapse; width:80%;">
+        <thead><tr><th>Timestamp</th><th>Risk Level</th><th>Summary</th></tr></thead>
+        <tbody></tbody>
+        </table>
+    </section>
+
+    <script>
+        function getAlerts() {
+            let id = document.getElementById("walletId").value;
+            fetch("/security-alerts/" + id)
+                .then(res => res.json())
+                .then(data => {
+                    let html = data.map(d => `<li>${d}</li>`).join('');
+                    document.getElementById("alerts").innerHTML = html;
+                });
+        }
+
+        function explainTx() {
+            let tx = document.getElementById("txHash").value;
+            fetch("/explain-tx/" + tx)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById("explanation").textContent = data.explanation;
+                });
+        }
+
+        function getSummary() {
+            let id = document.getElementById("summaryWalletId").value;
+            fetch("/wallet-summary/" + id)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById("summaryOutput").textContent = JSON.stringify(data, null, 2);
+                });
+        }
+
+        async function loadTransactions() {
+            const res = await fetch('/api/transactions');
+            const txns = await res.json();
+            const tbody = document.querySelector("#txTable tbody");
+            tbody.innerHTML = "";
+
+            txns.forEach(tx => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `<td>${tx.date}</td><td>${tx.merchant}</td><td>${tx.amount}</td><td>${tx.category}</td><td>${tx.explanation}</td>`;
+                tr.addEventListener('click', () => loadExplanation(tx.id));
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function loadExplanation(txId) {
+            const res = await fetch(`/api/explain/${txId}`);
+            const data = await res.json();
+            document.getElementById("explanationText").innerText = data.explanation;
+            document.getElementById("explanationBox").style.display = "block";
+        }
+
+        window.onload = loadTransactions;
+
+        async function loadBehaviorAlerts() {
+            const res = await fetch('/api/behavior-analyzer');
+            const data = await res.json();
+            const alertDiv = document.getElementById("alerts");
+
+            alertDiv.innerHTML = `<strong>Risk Level:</strong> ${data.riskLevel}<br/>
+                                <strong>Messages:</strong> <ul>` +
+            data.messages.map(m => `<li>${m}</li>`).join('') + "</ul>";
+        }
+
+        loadBehaviorAlerts();
+
+        // Auto-refresh transaction history every 10 seconds
+        setInterval(loadTransactions, 10000);
+
+        async function loadBehaviorAlertLog() {
+            const res = await fetch('/api/behavior-alerts-log');
+            const data = await res.json();
+            const tbody = document.querySelector("#alertLogTable tbody");
+            tbody.innerHTML = "";
+
+            data.slice().reverse().forEach(log => {
+            const row = document.createElement("tr");
+            row.innerHTML = `<td>${log.timestamp}</td><td>${log.risk}</td><td>${log.summary}</td>`;
+            tbody.appendChild(row);
+            });
+        }
+
+        loadBehaviorAlertLog();
+        setInterval(loadBehaviorAlertLog, 15000); // Auto-refresh every 15s
+    </script>
+</body>
+</html>
+

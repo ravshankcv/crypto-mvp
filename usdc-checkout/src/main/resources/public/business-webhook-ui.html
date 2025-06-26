@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Webhook + AI Categorizer</title>
+  <style>
+    body { font-family: Arial; padding: 20px; max-width: 600px; margin: auto; }
+    label { display: block; margin-top: 10px; }
+    textarea, input { width: 100%; padding: 8px; margin-top: 5px; }
+    button { margin-top: 15px; padding: 10px; width: 100%; background: #28a745; color: white; border: none; }
+    #result { margin-top: 20px; padding: 10px; border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <h2>Business Persona: Webhook Simulation</h2>
+
+  <label for="payload">Webhook JSON Payload</label>
+  <textarea id="payload" rows="6">
+{
+  "transactionId": "txn12345",
+  "amount": 500,
+  "vendor": "OpenAI Cloud",
+  "currency": "USD"
+}
+  </textarea>
+
+  <label for="hmac">HMAC Signature</label>
+  <input type="text" id="hmac" placeholder="Paste valid HMAC here">
+
+  <button onclick="sendWebhook()">Send Webhook</button>
+
+  <div id="result"></div>
+
+  <script>
+    async function sendWebhook() {
+      const payload = document.getElementById('payload').value;
+      const hmac = document.getElementById('hmac').value;
+
+      const response = await fetch('/webhook', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Signature': hmac
+        },
+        body: payload
+      });
+
+      const text = await response.text();
+      document.getElementById('result').innerText = text;
+    }
+  </script>
+</body>
+</html>
+
