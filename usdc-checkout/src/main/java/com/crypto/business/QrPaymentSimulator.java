@@ -17,7 +17,7 @@ public class QrPaymentSimulator {
 
     // Replace with actual deployed values
     private static final String INFURA_URL = "https://sepolia.infura.io/v3/26f29e34a90e4ab1ba3b18fe5c326fde";
-    private static final String USDC_CONTRACT_ADDRESS = "0xd98bf8653e9c0d337e23ed1cb868a4a76d1a2c81";
+    private static final String USDC_CONTRACT_ADDRESS = "0xa742C2401f654Aa6cf3cF4D05825ce521F014Ba6";
     private static final String RECEIVER_WALLET = "0xB428b0eef777a19dD27f8D5e640Ba0e1D865bca1";
 
     public static void main(String[] args) {

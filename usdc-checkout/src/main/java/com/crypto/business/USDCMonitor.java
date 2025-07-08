@@ -27,7 +27,7 @@ public class USDCMonitor {
 
                 Web3j web3 = Web3j.build(
                                 new HttpService("https://sepolia.infura.io/v3/26f29e34a90e4ab1ba3b18fe5c326fde"));
-                String contractAddress = "0xd98bf8653e9c0d337e23ed1cb868a4a76d1a2c81";
+                String contractAddress = "0xa742C2401f654Aa6cf3cF4D05825ce521F014Ba6";
 
                 Event transferEvent = new Event("Transfer",
                                 Arrays.asList(
